@@ -5,7 +5,7 @@ const https = require('https');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.get('/info', async (req, res) => {
+app.get('/api', async (req, res) => {
   try {
     const slackName = req.query.slackName || 'Tj Oloyede';
     const track = req.query.track || 'Backend';
