@@ -1,51 +1,78 @@
-const fs = require("fs");
-const express = require("express");
+const express = require('express');
+const moment = require('moment-timezone');
+const https = require('https');
 
 const app = express();
+const port = process.env.PORT || 3000;
 
-app.use(express.json());
+app.get('/info', async (req, res) => {
+  try {
+    const slackName = req.query.slackName || 'Tj Oloyede';
+    const track = req.query.track || 'Backend';
 
-const user = JSON.parse(fs.readFileSync(`${__dirname}/data.json`));
+    // Get current day of the week and UTC time
+    const currentDayOfWeek = moment().format('dddd');
+    const currentUtcTime = moment().utc().format('YYYY-MM-DD HH:mm:ss');
+    const utcOffset = moment().utcOffset();
 
-const currentDate = new Date();
-const dayNames = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-const currentDayIndex = currentDate.getUTCDay();
-const currentDayName = dayNames[currentDayIndex];
+    // GitHub URLs
+    const githubURL = 'https://github.com/FRVR-JAE/Hng-1';
+    const githubFileURL = `${githubURL}/blob/main/app.js`;
 
-const current = new Date();
-const year = current.getUTCFullYear();
-const month = String(current.getUTCMonth() + 1).padStart(2, "0"); // Add 1 to month because it's 0-indexed
-const day = String(current.getUTCDate()).padStart(2, "0");
-const hours = String(current.getUTCHours()).padStart(2, "0");
-const minutes = String(current.getUTCMinutes()).padStart(2, "0");
-const seconds = String(current.getUTCSeconds()).padStart(2, "0");
-
-const currentUtcTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`
-app.get("/api", (req, res) => {
-  const utc = new Date(
-    new Date().getTime() + new Date().getTimezoneOffset() * 60000
-  );
-  const utc_time = utc.toISOString().split(".")[0] + "Z";
-  res.status(200).json({
-    slack_name:"Tj oloyede",
-    current_day: currentDayName,
-    utc_time: utc.toISOString().split(".")[0] + "Z",
-    track:"backend",
-    github_file_url: user.github_file_url,
-    github_repo_url: user.github_repo_url,
-    status_code: user.status_code,
-  });
+    // Fetch the full source code from the GitHub repository
+    https.get(`${githubURL}/archive/main.zip`, (response) => {
+      if (response.statusCode === 200) {
+        // Status Code of Success
+        res.status(200).json({
+          slackName,
+          currentDayOfWeek,
+          currentUtcTime,
+          utcOffset, // Include the UTC offset in the response
+          track,
+          githubFileURL,
+          githubURL,
+          statusCode: 'Success',
+        });
+      } else if (response.statusCode === 302) {
+        // Follow the redirection to the new URL
+        const redirectedURL = response.headers.location;
+        https.get(redirectedURL, (newResponse) => {
+          if (newResponse.statusCode === 200) {
+            // Status Code of Success
+            res.status(200).json({
+              slackName,
+              currentDayOfWeek,
+              currentUtcTime,
+              utcOffset, // Include the UTC offset in the response
+              track,
+              githubFileURL: redirectedURL, // Use the new URL
+              githubURL,
+              statusCode: 'Success',
+            });
+          } else {
+            console.error(`GitHub request failed with status code: ${newResponse.statusCode}`);
+            res.status(500).json({ error: 'Internal Server Error' });
+          }
+        }).on('error', (error) => {
+          console.error(error);
+          res.status(500).json({ error: 'Internal Server Error' });
+        });
+      } else {
+        console.error(`GitHub request failed with status code: ${response.statusCode}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    }).on('error', (error) => {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
-const port = 8080;
+
 app.listen(port, () => {
-  console.log(`App running on port ${port}...`);
+  console.log(`Server is running on port ${port}`);
 });
+
 
