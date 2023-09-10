@@ -17,7 +17,7 @@ app.get('/api', (req, res) => {
 
     // GitHub URLs
     const githubFileURL = 'hhttps://github.com/FRVR-JAE/Hng-1/main/app.js';
-    const githubRepoURL = 'https://github.com/username/repo';
+    const githubRepoURL = 'https://github.com/FRVR-JAE/Hng-1';
 
     // Response JSON
     const jsonResponse = {
