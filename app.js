@@ -1,70 +1,43 @@
 const express = require('express');
 const moment = require('moment-timezone');
-const https = require('https');
-
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.get('/api', async (req, res) => {
+app.get('/api', (req, res) => {
   try {
-    const slackName = req.query.slackName || 'Tj Oloyede';
-    const track = req.query.track || 'Backend';
+    // Get query parameters
+    const slackName = req.query.slack_name || 'TJ_oloyede';
+    const track = req.query.track || 'backend';
 
-    // Get current day of the week and UTC time
+    // Get current day of the week
     const currentDayOfWeek = moment().format('dddd');
-    const currentUtcTime = moment().utc().format('YYYY-MM-DD HH:mm:ss');
-    const utcOffset = moment().utcOffset();
+
+    // Get current UTC time with validation of +/-2 minutes
+    const now = moment();
+    const isValidUtcTime = now.isBetween(
+      now.clone().subtract(2, 'minutes'),
+      now.clone().add(2, 'minutes')
+    );
+    const currentUtcTime = isValidUtcTime
+      ? now.toISOString()
+      : 'Invalid UTC Offset';
 
     // GitHub URLs
-    const githubURL = 'https://github.com/FRVR-JAE/Hng-1';
-    const githubFileURL = `${githubURL}/blob/main/app.js`;
+    const githubFileURL = 'https://github.com/FRVR-JAE/Hng-1/blob/main/app.js';
+    const githubRepoURL = 'https://github.com/FRVR-JAE/Hng-1';
 
-    // Fetch the full source code from the GitHub repository
-    https.get(`${githubURL}/archive/main.zip`, (response) => {
-      if (response.statusCode === 200) {
-        // Status Code of Success
-        res.status(200).json({
-          slackName,
-          currentDayOfWeek,
-          currentUtcTime,
-          utcOffset, // Include the UTC offset in the response
-          track,
-          githubFileURL,
-          githubURL,
-          statusCode: 'Success',
-        });
-      } else if (response.statusCode === 302) {
-        // Follow the redirection to the new URL
-        const redirectedURL = response.headers.location;
-        https.get(redirectedURL, (newResponse) => {
-          if (newResponse.statusCode === 200) {
-            // Status Code of Success
-            res.status(200).json({
-              slackName,
-              currentDayOfWeek,
-              currentUtcTime,
-              utcOffset, // Include the UTC offset in the response
-              track,
-              githubFileURL: redirectedURL, // Use the new URL
-              githubURL,
-              statusCode: 'Success',
-            });
-          } else {
-            console.error(`GitHub request failed with status code: ${newResponse.statusCode}`);
-            res.status(500).json({ error: 'Internal Server Error' });
-          }
-        }).on('error', (error) => {
-          console.error(error);
-          res.status(500).json({ error: 'Internal Server Error' });
-        });
-      } else {
-        console.error(`GitHub request failed with status code: ${response.statusCode}`);
-        res.status(500).json({ error: 'Internal Server Error' });
-      }
-    }).on('error', (error) => {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    });
+    // Response JSON
+    const jsonResponse = {
+      slack_name: slackName,
+      current_day: currentDayOfWeek,
+      utc_time: currentUtcTime,
+      track: track,
+      github_file_url: githubFileURL,
+      github_repo_url: githubRepoURL,
+      status_code: 200,
+    };
+
+    res.status(200).json(jsonResponse);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -74,5 +47,7 @@ app.get('/api', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+
 
 
