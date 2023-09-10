@@ -16,7 +16,7 @@ app.get('/api', (req, res) => {
     const currentUtcTime = moment().utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
 
     // GitHub URLs
-    const githubFileURL = 'hhttps://github.com/FRVR-JAE/Hng-1/main/app.js';
+    const githubFileURL = 'https://github.com/FRVR-JAE/Hng-1/main/app.js';
     const githubRepoURL = 'https://github.com/FRVR-JAE/Hng-1';
 
     // Response JSON
