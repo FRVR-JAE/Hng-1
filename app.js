@@ -1,30 +1,23 @@
 const express = require('express');
-const moment = require('moment-timezone');
+const moment = require('moment');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 2000;
 
 app.get('/api', (req, res) => {
   try {
     // Get query parameters
-    const slackName = req.query.slack_name || 'TJ_oloyede';
+    const slackName = req.query.slack_name || 'tj_oloyede';
     const track = req.query.track || 'backend';
 
     // Get current day of the week
     const currentDayOfWeek = moment().format('dddd');
 
-    // Get current UTC time with validation of +/-2 minutes
-    const now = moment();
-    const isValidUtcTime = now.isBetween(
-      now.clone().subtract(2, 'minutes'),
-      now.clone().add(2, 'minutes')
-    );
-    const currentUtcTime = isValidUtcTime
-      ? now.toISOString()
-      : 'Invalid UTC Offset';
+    // Get current UTC time formatted as specified
+    const currentUtcTime = moment().utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
 
     // GitHub URLs
-    const githubFileURL = 'https://github.com/FRVR-JAE/Hng-1/blob/main/app.js';
-    const githubRepoURL = 'https://github.com/FRVR-JAE/Hng-1';
+    const githubFileURL = 'https://github.com/username/repo/blob/main/file_name.ext';
+    const githubRepoURL = 'https://github.com/username/repo';
 
     // Response JSON
     const jsonResponse = {
